@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app-deployment  # Defining the deployment name to track the app.
+spec:
+  replicas: 3  # Scaling the application to 3 replicas for better availability and load handling.
+  selector:
+    matchLabels:
+      app: flask-app  # Ensuring the correct pods are selected for the deployment.
+  template:
+    metadata:
+      labels:
+        app: flask-app  # Labeling pods for better monitoring and scaling.
+    spec:
+      containers:
+      - name: flask-app  # Container name for clarity and easy management.
+        image: albertocatalan/flask-app:latest  # Using the Docker image we built for consistency.
+        ports:
+        - containerPort: 5000  # Exposing port 5000 to access the app.
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service  # Creating a service to expose the app to the world.
+spec:
+  selector:
+    app: flask-app  # The service will forward traffic to the correct pods.
+  ports:
+    - protocol: TCP
+      port: 80  # Exposing port 80 externally for public access.
+      targetPort: 5000  # Mapping to the container’s internal port.
+  type: LoadBalancer  # Creating a load balancer to ensure scalability and high availability.
