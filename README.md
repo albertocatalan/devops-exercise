@@ -1,60 +1,179 @@
-# Abraxas DevOps Exercise
+# Abraxas DevOps Exercise: Flask App with CI/CD, Kubernetes, and Persistent State
 
-## Intro
+## Requirements to Run the Application
 
-Thank you for your interest and participation in our recruitment process for our DevOps Engineer position, to continue with the process we ask you to take the following technical test and share your result with us.
+Before running the application, make sure the following tools are set up in your environment:
 
-If you have any questions or comments during the test, do not hesitate to contact us by email at reclutamiento@grupoabraxas.com
+### Required Tools
 
-## Get your environment ready
+- **Git**: To clone the repository and manage the source code.
+  - [Download Git](https://git-scm.com/)
 
-You'll need:
+- **Docker**: To run the container image.
+  - [Install Docker](https://www.docker.com/get-started)
 
-1. A Github account
-2. A docker hub account
-3. Access to a kubernetes cluster for testing purposes (It can be Minikube or any other public or private option)
-4. Fork this repository, then clone it locally.
+- **Minikube**: To create and manage a local Kubernetes cluster.
+  - [Install Minikube](https://minikube.sigs.k8s.io/docs/)
 
-## Ready for action?
+- **Kubernetes**: To orchestrate the containers and deploy the application.
+  - [Install Kubernetes](https://kubernetes.io/docs/setup/)
 
-Great!!
-As a DevOps we need you to create a mechanism to deploy nanoservices. You'll be in charge of deploy, monitor, scale applications and promote the DevOps culture with the development team. But let's start by the begining, below you'll find the requirements for this test.
+- **Kubectl**: Command-line tool to interact with the Kubernetes cluster.
+  - [Install Kubectl](https://kubernetes.io/docs/tasks/tools/)
 
-### Dockerize services
+- **Docker Hub Account**: To store and access the container images.
+  - [Create Docker Hub Account](https://hub.docker.com/)
 
-Dockerize the given service at [app.py](app.py), including all it's required dependencies installed and ready to rock.
+- **GitHub Account**: To access the project repository.
+  - [Create GitHub Account](https://github.com/)
 
-### CI/CD
+---
 
-Implement a Github Actions workflow to build and publish your docker image on [docker hub](https://hub.docker.com/).
+## Steps to Run the Application
 
-### Deployment
+1. **Clone the Repository**
 
-Create a service configuration file to deploy the service on your kubernetes cluster and expose it to the world.
+   Clone the repository from GitHub:
 
-### Extra Points
+   ```bash
+   git clone https://github.com/albertocatalan/devops-exercise.git
+   ```
 
-- Improve the given python service so it maintains a counter of the amount of **POST** requests it served, and return it on **GET** requests.
+   Or use SSH if preferred:
 
-## Deliverables
+   ```bash
+   git clone git@github.com:albertocatalan/devops-exercise.git
+   ```
 
-- A link to the public docker registry where the image is published.
+2. **Deploy the Application to Kubernetes**
 
-- A link to your repository containing:
+   Make sure Minikube is running:
 
-    1. The Dockerfile(s) for the image(s).
-    2. The kubernetes file(s) for the service deployment(s). The deployment should be replicable on our kubernetes cluster.
-    3. Optionally the code for the improved version of the service.
+   ```bash
+   minikube start
+   ```
 
-## General Guidelines
+   Apply the Kubernetes configuration files to deploy the Flask app:
 
-Your code should be as simple as possible, yet well documented and robust.
-Spend some time on designing your solution. Think about operational use cases from the real world. Few examples:
+   ```bash
+   kubectl apply -f deployment.yml
+   kubectl apply -f service.yml
+   ```
 
-1. What happens if a service crashes?
-2. How much effort will it take to create a new service? D.R.Y!
+3. **Access the Application via Minikube**
 
-## Reference
+   Once the service is deployed, use the following command to get the service URL and access the Flask app:
 
-- [Run a Stateless Application Using a Deployment](https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/)
+   ```bash
+   minikube service flask-app-service --url
+   ```
 
+   This command will return the URL to access the application running inside Minikube.
+
+4. **Check Application Logs**
+
+   To check the logs of the pods to ensure everything is running smoothly, use:
+
+   ```bash
+   kubectl get pods
+   kubectl logs <pod-name>
+   ```
+
+---
+
+## Docker Hub Image
+
+The Flask application is already containerized and stored on Docker Hub. You can pull the image directly from the following repository:
+
+```bash
+docker pull albertocatalan/flask-app
+```
+
+---
+
+## Kubernetes Deployment
+
+The Kubernetes deployment is defined in the `deployment.yml` and `service.yml` files. These files specify the number of replicas, persistent storage for the SQLite database, and the service setup to expose the application to external traffic.
+
+To deploy, simply apply the Kubernetes configuration files as shown above.
+
+---
+
+## Technologies Used
+
+- **Flask**: A lightweight Python web framework.
+- **Docker**: For containerizing the application.
+- **GitHub Actions**: For CI/CD automation.
+- **Kubernetes**: For deployment, scaling, and managing the app.
+- **SQLite**: For storing the POST request counter persistently.
+- **Minikube**: To simulate a local Kubernetes environment for testing and development.
+
+---
+## Method
+For this DevOps exercise, I started by setting up the necessary tools and environment. This included forking the repository, cloning it locally, and ensuring I had a GitHub account, Docker Hub credentials, and access to a Kubernetes cluster. Minikube was also used to simulate a local Kubernetes cluster for testing and deployment.
+
+## Step 1: Dockerize the Service
+
+I began by creating a `Dockerfile` to containerize the Flask app. This was essential because Docker helps ensure that the application runs consistently across environments, whether in development or production. I used a lightweight `python:3.9-slim` image to minimize the image size and increase efficiency. In the `Dockerfile`, I copied the application code and dependencies into the image and installed the required packages via pip.
+
+## Step 2: Implementing CI/CD with GitHub Actions
+
+I set up a CI/CD pipeline using GitHub Actions. The goal here was to automate the build and deployment of the Docker image. In the `.github/workflows/docker-flask-app-pipeline.yml` file, I defined the workflow to trigger whenever changes were pushed to the `master` branch.
+
+- First, the pipeline checks out the code to ensure the latest version is used for building the Docker image.
+- Then, it logs into Docker Hub using secure credentials stored in GitHub secrets.
+- After that, it builds the Docker image using the `docker build` command, tagging it with the `latest` tag for easy access.
+- Finally, the pipeline pushes the built image to Docker Hub, making it accessible for future deployments and scaling.
+
+## Step 3: Kubernetes Deployment
+
+For deployment, I created a Kubernetes configuration file, `deployment.yml`, to deploy the Flask app on the Kubernetes cluster. The configuration includes:
+
+- **Deployment**: I set the application to run with 3 replicas to ensure scalability and availability. I also defined a persistent volume to store the SQLite database, which ensures the POST request counter remains consistent even when pods are restarted or scaled.
+- **Service**: I created a service to expose the Flask app to the outside world, allowing traffic to reach the application. This setup uses a load balancer to distribute traffic evenly across the pods, ensuring the application scales effectively.
+
+## Step 4: Extra Points Flask Application Enhancements (Extra: Shared POST Count Across Pods)
+
+To meet the requirement of maintaining a counter of POST requests, I modified the `app.py` file. Initially, I stored the counter in memory, but since we need the counter to be shared across replicas, I switched to using SQLite with a persistent volume. This approach ensures that the counter value is stored persistently and is accessible to all pods, even after restarts.
+
+In the updated `app.py`, I created functions to initialize and interact with the SQLite database to store and update the counter:
+- The **GET route** now returns the current POST request count, making it easy to monitor.
+- The **POST route** increments the counter each time a new POST request is made.
+
+This ensures that the counter remains consistent across all replicas and can be easily tracked.
+
+## Step 5 Pull Request Workflow
+
+As part of fostering a DevOps culture and ensuring best practices in deployment, monitoring, and scaling applications, I implemented a pull request workflow in the repository. 
+
+I created a new branch named `test`, enabling interaction limits for external users as follows:
+
+- Restricted interactions to contributors and collaborators who had previously committed to the repository.  
+- Configured the branch to enforce a "cool-down" period during discussions or when unwanted interactions might arise.  
+
+This setup ensures a collaborative and secure environment for future contributions, while maintaining a streamlined review process. Additionally, the workflow supports the principles of continuous integration, encouraging team alignment and code quality.  
+
+By merging a commit from the `devops-files` branch into `master`, I demonstrated how pull requests promote better collaboration and adherence to DevOps principles in practice.
+
+## Final Step: Testing and Scaling
+
+Once everything was set up, I deployed the application to the Kubernetes cluster. To verify it was working as expected, I accessed the service using `minikube service flask-app-service` to see the Flask app in action. By scaling the number of replicas, I ensured the app could handle multiple requests while maintaining the shared counter value.
+
+This setup ensures we followed the DevOps principles of automating deployments, monitoring, scaling, and maintaining consistent application behavior across environments. Each decision was made with scalability and reliability in mind, promoting a culture of continuous integration and deployment.
+
+## Notes
+
+- The app uses a shared POST request counter stored in an SQLite database that persists across pod restarts by leveraging persistent volumes in Kubernetes.
+
+
+## Author
+
+This project was developed by [Alberto Catalán]
+
+- GitHub (Project Repository): [albertocatalan](https://github.com/albertocatalan)
+- GitHub (Personal Projects): [cataluniat](https://github.com/cataluniat)
+- LinkedIn: [Alberto Catalán](https://mx.linkedin.com/in/alberto-catalan)
+- Email: [businesscatalangmail.com](mailto:businesscatalangmail.com)
+- Position: Solutions Architect Associate (Certified)
+
+This exercise is intended solely for the objectives defined by Grupo Abraxas.
