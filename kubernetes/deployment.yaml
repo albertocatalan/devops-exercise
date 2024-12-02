@@ -17,6 +17,25 @@ spec:
         image: albertocatalan/flask-app:latest  # Using the Docker image we built for consistency.
         ports:
         - containerPort: 5000  # Exposing port 5000 to access the app.
+        volumeMounts:  # Updated: Mount a persistent volume for the SQLite database.
+        - name: counter-volume  # Updated: The name of the volume to be used.
+          mountPath: /data  # Updated: Path inside the container where the database will persist.
+      volumes:  # Updated: Define a Persistent Volume Claim for the database.
+      - name: counter-volume
+        persistentVolumeClaim:
+          claimName: flask-app-pvc  # Updated: Link to the PVC for persistent storage.
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim  # Updated: Adding a Persistent Volume Claim for database persistence.
+metadata:
+  name: flask-app-pvc  # Updated: Name of the PVC for easy reference.
+spec:
+  accessModes:
+  - ReadWriteOnce  # Updated: Allowing a single pod to read and write to the volume.
+  resources:
+    requests:
+      storage: 1Gi  # Updated: Requesting 1GB of storage for the database.
 
 ---
 apiVersion: v1
